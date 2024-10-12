@@ -8,7 +8,7 @@ export function generateCalendarMarkup(
 	year: number, // Год, для которого создается календарь
 	month: number, // Месяц (0 - январь, 11 - декабрь)
 ): Markup.Markup<InlineKeyboardMarkup> {
-	logger.debug('Generating calendar for date selection 🗓️');
+	logger.debug('[🗓️] Generating calendar for date selection.');
 
 	// Массив для хранения кнопок календаря
 	const buttons: InlineKeyboardButton[][] = [];

@@ -9,13 +9,13 @@ dotenv.config();
 
 // Функция для получения списка аэропортов по названию города
 export async function getAirports(city: string): Promise<Airport[]> {
-	logger.debug(`Поиск аэропортов для города: ${city} ✈️`);
+	logger.debug(`[✈️] Search for airports in the city: ${city}.`);
 
 	// Получаем API-ключ из переменных окружения
 	const apiKey = process.env.TRAVELPAYOUTS_AVIASALES;
 	if (!apiKey) {
 		// Если API-ключ отсутствует, логируем ошибку и возвращаем пустой массив
-		logger.error('API-ключ Aviasales не найден в переменных окружения ⚠️');
+		logger.error('[⚠️] Aviasales API key not found in environment variables.');
 		return [];
 	}
 
@@ -31,13 +31,13 @@ export async function getAirports(city: string): Promise<Airport[]> {
 	};
 
 	try {
-		logger.debug('Выполнение запроса к API... 🔍');
+		logger.debug('[🔍] Make a request to the API...');
 		// Выполняем запрос к API
 		const response = await axios.get(url, { params });
 
 		// Проверяем, что статус ответа успешный (200 OK)
 		if (response.status !== 200) {
-			logger.error(`Ошибка запроса к API: ${response.statusText} ❌`);
+			logger.error(`[❌] API request error: ${response.statusText}.`);
 			return [];
 		}
 
@@ -46,11 +46,11 @@ export async function getAirports(city: string): Promise<Airport[]> {
 
 		// Проверяем, что данные являются массивом и не пусты
 		if (!Array.isArray(data) || data.length === 0) {
-			logger.warn('Аэропорты не найдены ❌');
+			logger.warn('[❌] No airports found.');
 			return [];
 		}
 
-		logger.debug('Данные получены от API:', data);
+		logger.debug('[📦️] The data is retrieved from the API:', data);
 
 		// Настройки для Fuse.js (библиотека для поиска по строкам)
 		const fuseOptions = {
@@ -68,7 +68,7 @@ export async function getAirports(city: string): Promise<Airport[]> {
 
 		// Если совпадений не найдено, логируем предупреждение и возвращаем пустой массив
 		if (searchResult.length === 0) {
-			logger.warn('Аэропорты не найдены с использованием Fuse.js ❌');
+			logger.warn('[❌] Airports not found with Fuse.js');
 			return [];
 		}
 
@@ -85,19 +85,19 @@ export async function getAirports(city: string): Promise<Airport[]> {
 
 		// Если после фильтрации не осталось аэропортов, логируем предупреждение и возвращаем пустой массив
 		if (airports.length === 0) {
-			logger.warn('Аэропорты не найдены после фильтрации ❌');
+			logger.warn('[❌] No airports found after filtering.');
 			return [];
 		}
 
 		// Логируем количество найденных аэропортов и возвращаем результат
-		logger.info(`Найдено аэропортов: ${airports.length} ✈️`);
+		logger.info(`[✈️] Airports found: ${airports.length}.`);
 		return airports;
 	} catch (error) {
 		// Обработка ошибок при запросе к API
 		if (axios.isAxiosError(error)) {
-			logger.error('Ошибка запроса к API:', error.message);
+			logger.error('[❌] API request error:', error.message);
 		} else {
-			logger.error('Неизвестная ошибка:', error);
+			logger.error('[❌] Unknown error:', error);
 		}
 
 		// В случае ошибки возвращаем пустой массив

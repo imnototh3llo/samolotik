@@ -10,7 +10,7 @@ import logger from '../utils/logger.js';
 export const textHandler = async (ctx: NarrowedContext<MyContext, Update.MessageUpdate<Message.TextMessage>>) => {
 	try {
 		// Логируем начало обработки текстового сообщения
-		logger.debug('Processing user text message');
+		logger.debug('[✏️] Processing user text message...');
 
 		// Получаем текущий шаг процесса из сессии
 		const step = ctx.session.step;
@@ -20,20 +20,20 @@ export const textHandler = async (ctx: NarrowedContext<MyContext, Update.Message
 			const city = ctx.message.text.trim(); // Получаем название города из сообщения пользователя
 			if (!city) {
 				// Если город не был указан, отправляем предупреждение
-				logger.warn('City was not specified ❌');
+				logger.warn('[❌] City was not specified.');
 				await ctx.reply('Пожалуйста, введите город отправления.');
 				return;
 			}
 
-			logger.info(`Город отправления: ${city}`);
+			logger.info(`[✈️] Departure city: ${city}.`);
 
 			try {
 				// Запрашиваем список аэропортов для указанного города
-				logger.debug(`Запрос списка аэропортов для города: ${city}`);
+				logger.debug(`[🔍] Request a list of airports for the city: ${city}.`);
 				const airports = await getAirports(city);
 				if (!airports || airports.length === 0) {
 					// Если аэропорты не найдены, уведомляем пользователя
-					logger.warn('Аэропорты не найдены ❌');
+					logger.warn('[❌] No airports found.');
 					await ctx.reply('Аэропорты не найдены. Попробуйте ввести другой город.');
 					return;
 				}
@@ -47,12 +47,12 @@ export const textHandler = async (ctx: NarrowedContext<MyContext, Update.Message
 				};
 
 				// Предлагаем пользователю выбрать аэропорт отправления, отправляя кнопки с названиями аэропортов
-				logger.debug('Предлагаем пользователю выбрать аэропорт отправления');
+				logger.debug('[✈️] Prompt user for selection of departure airport.');
 				const airportButtons = airports.map((airport) => [airport.name]);
 				await ctx.reply('Выберите аэропорт отправления:', Markup.keyboard(airportButtons).oneTime().resize());
 			} catch (error) {
 				// Логируем ошибку при получении списка аэропортов
-				logger.error('Ошибка при получении списка аэропортов:', error);
+				logger.error('[❌] Error retrieving the list of airports:', error);
 				await ctx.reply('Произошла ошибка при поиске аэропортов. Пожалуйста, попробуйте снова позже.');
 			}
 		} else if (step === 'from_airport_selection') {
@@ -79,20 +79,20 @@ export const textHandler = async (ctx: NarrowedContext<MyContext, Update.Message
 			const city = ctx.message.text.trim(); // Получаем название города из сообщения пользователя
 			if (!city) {
 				// Если город не был указан, отправляем предупреждение
-				logger.warn('Город не был указан ❌');
+				logger.warn('[⚠️] City not specified.');
 				await ctx.reply('Пожалуйста, введите город прибытия.');
 				return;
 			}
 
-			logger.info(`Город прибытия: ${city}`);
+			logger.info(`[🛬] Arrival city: ${city}.`);
 
 			try {
 				// Запрашиваем список аэропортов для указанного города
-				logger.debug(`Запрос списка аэропортов для города: ${city}`);
+				logger.debug(`[📝] Request a list of airports for the city: ${city}.`);
 				const airports = await getAirports(city);
 				if (!airports || airports.length === 0) {
 					// Если аэропорты не найдены, уведомляем пользователя
-					logger.warn('Аэропорты не найдены ❌');
+					logger.warn('[❌] No airports found.');
 					await ctx.reply('Аэропорты не найдены. Попробуйте ввести другой город.');
 					return;
 				}
@@ -106,12 +106,12 @@ export const textHandler = async (ctx: NarrowedContext<MyContext, Update.Message
 				};
 
 				// Предлагаем пользователю выбрать аэропорт прибытия, отправляя кнопки с названиями аэропортов
-				logger.debug('Предлагаем пользователю выбрать аэропорт прибытия');
+				logger.debug('[🛬] Invitation to the user to select the airport of arrival.');
 				const airportButtons = airports.map((airport) => [airport.name]);
 				await ctx.reply('Выберите аэропорт прибытия:', Markup.keyboard(airportButtons).oneTime().resize());
 			} catch (error) {
 				// Логируем ошибку при получении списка аэропортов
-				logger.error('Ошибка при получении списка аэропортов:', error);
+				logger.error('[❌] Error when retrieving a list of airports:', error);
 				await ctx.reply('Произошла ошибка при поиске аэропортов. Пожалуйста, попробуйте снова позже.');
 			}
 		} else if (step === 'to_airport_selection') {
@@ -152,7 +152,7 @@ export const textHandler = async (ctx: NarrowedContext<MyContext, Update.Message
 		}
 	} catch (error) {
 		// Логируем ошибку при обработке текстового сообщения
-		logger.error('Ошибка при обработке текстового сообщения:', error);
+		logger.error('[❌] Error while processing a text message:', error);
 		await ctx.reply('Произошла ошибка. Пожалуйста, попробуйте снова.');
 	}
 };

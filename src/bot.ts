@@ -16,14 +16,14 @@ import logger from './utils/logger.js';
 const dotenvResult = dotenv.config();
 if (dotenvResult.error) {
 	// Если произошла ошибка при загрузке .env файла, логируем ошибку и завершаем процесс
-	logger.error({ err: dotenvResult.error }, 'Error loading .env file ⚠️');
+	logger.error({ err: dotenvResult.error }, '[⚠️] Error loading .env file.');
 	process.exit(1);
 }
 
 // Проверка наличия BOT_TOKEN в переменных окружения
 if (!process.env.BOT_TOKEN) {
 	// Если BOT_TOKEN не найден, логируем ошибку и завершаем процесс
-	logger.error('BOT_TOKEN not found in environment variables ⚠️');
+	logger.error('[⚠️] BOT_TOKEN not found in environment variables.');
 	process.exit(1);
 }
 
@@ -50,37 +50,37 @@ bot.action(/NEXT_MONTH_(?<year>\d{4})_(?<month>\d{1,2})/, nextMonthHandler); // 
 // Обработка и логирование ошибок, возникающих в боте
 bot.catch(async (error, ctx) => {
 	// Логирование ошибки с идентификатором обновления, если произошла ошибка при обработке обновления
-	logger.error({ err: error, update_id: ctx.update.update_id }, 'An error occurred while processing the update ❌');
+	logger.error({ err: error, update_id: ctx.update.update_id }, '[❌] An error occurred while processing the update:');
 });
 /* eslint-enable promise/prefer-await-to-callbacks */
 
 // Функция для запуска бота
 async function launchBot() {
 	try {
-		logger.info('Launching bot... 🚀');
+		logger.info('[🚀] Launching bot...');
 		await bot.launch(); // Запуск бота
 	} catch (error) {
 		// Логирование ошибки, если бот не удалось запустить, и завершение процесса
-		logger.error({ err: error }, 'Error launching the bot ❌');
+		logger.error({ err: error }, '[❌] Error launching the bot:');
 		process.exit(1);
 	}
 }
 
 // Запуск бота
 void launchBot();
-logger.info('Bot launched successfully! ✅');
+logger.info('[✅] Bot launched successfully!');
 
 // Обработчики корректного завершения работы для системных сигналов
 process.once('SIGINT', () => {
 	// Обработка сигнала SIGINT (например, при нажатии Ctrl+C), логирование и остановка бота
-	logger.warn('Received SIGINT, stopping bot ✋');
+	logger.warn('[✋] Received SIGINT, stopping bot.');
 	bot.stop();
 	process.exit(0);
 });
 
 process.once('SIGTERM', () => {
 	// Обработка сигнала SIGTERM (например, при завершении процесса), логирование и остановка бота
-	logger.warn('Received SIGTERM, stopping bot ✋');
+	logger.warn('[✋] Received SIGTERM, stopping bot.');
 	bot.stop();
 	process.exit(0);
 });
@@ -88,12 +88,12 @@ process.once('SIGTERM', () => {
 // Обработка необработанных отклонений промисов и неперехваченных исключений, логирование их и завершение работы
 process.on('unhandledRejection', (reason, promise) => {
 	// Логирование необработанного отклонения промиса и завершение процесса
-	logger.error({ promise, reason }, 'Unhandled promise rejection ⚠️');
+	logger.error({ promise, reason }, '[⚠️] Unhandled promise rejection:');
 	process.exit(1);
 });
 
 process.on('uncaughtException', (error) => {
 	// Логирование неперехваченного исключения и завершение процесса
-	logger.error({ err: error }, 'Unhandled exception ❌');
+	logger.error({ err: error }, '[❌] Unhandled exception:');
 	process.exit(1);
 });
