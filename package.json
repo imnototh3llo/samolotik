@@ -1,0 +1,46 @@
+{
+	"name": "samolotik",
+	"version": "1.0.0",
+	"description": "Automatic ticket price check and check-in for flights of various Russian airlines. ✈️",
+	"type": "module",
+	"main": "dist/src/bot.js",
+	"scripts": {
+		"build:clean": "del-cli dist",
+		"build:check": "tsc --noEmit",
+		"build:esm": "swc ./src --out-dir ./dist",
+		"build": "pnpm build:clean && pnpm build:check && pnpm build:esm",
+		"lint": "prettier --check . && eslint . --format=pretty",
+		"format": "prettier --write . && eslint . --fix --format=pretty",
+		"fmt": "pnpm format",
+		"start": "node --enable-source-maps dist/src/bot.js",
+		"start:dev": "pnpm build && pnpm build:clean && pnpm build:check && pnpm build:esm && pnpm start",
+		"start:prod": "pnpm format && pnpm build && pnpm start"
+	},
+	"dependencies": {
+		"@swc/helpers": "^0.5.13",
+		"@telegraf/types": "^7.1.0",
+		"axios": "^1.7.7",
+		"chalk": "^5.3.0",
+		"dotenv": "^16.4.5",
+		"fuse.js": "^7.0.0",
+		"pino": "^9.4.0",
+		"pino-pretty": "^11.2.2",
+		"telegraf": "^4.16.3"
+	},
+	"devDependencies": {
+		"@sapphire/ts-config": "^5.0.1",
+		"@swc/cli": "^0.4.1-nightly.20240914",
+		"@swc/core": "^1.7.35",
+		"@types/node": "^22.7.5",
+		"del-cli": "^6.0.0",
+		"eslint": "^9.12.0",
+		"eslint-config-neon": "^0.2.0",
+		"eslint-formatter-pretty": "^6.0.1",
+		"lodash.merge": "^4.6.2",
+		"prettier": "^3.3.3",
+		"ts-node": "^10.9.2",
+		"typegram": "^5.2.0",
+		"typescript": "^5.6.3"
+	},
+	"packageManager": "pnpm@9.10.0"
+}
