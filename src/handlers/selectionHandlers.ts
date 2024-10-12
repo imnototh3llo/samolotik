@@ -17,7 +17,7 @@ export const airportFromHandler: MiddlewareFn<MyContext> = async (ctx) => {
 
 		// Получаем город из сообщения пользователя
 		const city = ctx.message.text;
-		logger.info(`Departure city: ${city} ✈️`);
+		logger.info(`[✈️] Departure city: ${city}.`);
 
 		// Запрашиваем аэропорты для указанного города
 		const airports = await getAirports(city);
@@ -40,7 +40,7 @@ export const airportFromHandler: MiddlewareFn<MyContext> = async (ctx) => {
 		await ctx.reply('Выберите аэропорт отправления:', Markup.keyboard(airportButtons).oneTime().resize());
 	} catch (error) {
 		// Логируем ошибку и уведомляем пользователя
-		logger.error('Error handling departure airport selection ❌', error);
+		logger.error('[❌] Error handling departure airport selection:', error);
 		await ctx.reply('Произошла ошибка. Пожалуйста, попробуйте снова.');
 	}
 };
@@ -56,7 +56,7 @@ export const airportToHandler: MiddlewareFn<MyContext> = async (ctx) => {
 
 		// Получаем город из сообщения пользователя
 		const city = ctx.message.text;
-		logger.info(`Arrival city: ${city} 🛬`);
+		logger.info(`[🛬] Arrival city: ${city}.`);
 
 		// Запрашиваем аэропорты для указанного города
 		const airports = await getAirports(city);
@@ -79,7 +79,7 @@ export const airportToHandler: MiddlewareFn<MyContext> = async (ctx) => {
 		await ctx.reply('Выберите аэропорт прибытия:', Markup.keyboard(airportButtons).oneTime().resize());
 	} catch (error) {
 		// Логируем ошибку и уведомляем пользователя
-		logger.error('Error handling arrival airport selection ❌', error);
+		logger.error('[❌] Error handling arrival airport selection:', error);
 		await ctx.reply('Произошла ошибка. Пожалуйста, попробуйте снова.');
 	}
 };
@@ -95,14 +95,14 @@ export const dateSelectionHandler: MiddlewareFn<MyContext> = async (ctx) => {
 
 		// Получаем выбранную дату из группы регулярного выражения
 		const date = ctx.match.groups.date;
-		logger.info(`Selected departure date: ${date} 📅`);
+		logger.info(`[📅] Selected departure date: ${date}.`);
 
 		// Получаем уже выбранные даты из сессии (или пустой массив, если их нет)
 		const selectedDates = ctx.session.selectedDates ?? [];
 
 		// Проверяем, была ли дата уже выбрана, и удаляем её, если да
 		if (selectedDates.includes(date)) {
-			logger.info(`Date already selected, removing: ${date} 🗑️`);
+			logger.info(`[🗑️] Date already selected, removing: ${date}.`);
 			const updatedDates = selectedDates.filter((selectedDate: string) => selectedDate !== date);
 
 			ctx.session = {
@@ -111,7 +111,7 @@ export const dateSelectionHandler: MiddlewareFn<MyContext> = async (ctx) => {
 			};
 		} else {
 			// Если дата не была выбрана, добавляем её в список выбранных дат
-			logger.info(`Adding selected date: ${date} ➕`);
+			logger.info(`[➕] Adding selected date: ${date}.`);
 			const updatedDates = [...selectedDates, date];
 
 			ctx.session = {
@@ -130,7 +130,7 @@ export const dateSelectionHandler: MiddlewareFn<MyContext> = async (ctx) => {
 		);
 	} catch (error: any) {
 		// Логируем ошибку и уведомляем пользователя
-		logger.error('Error selecting departure date ❌', error);
+		logger.error('[❌] Error selecting departure date:', error);
 		if (error.code === 400) {
 			await ctx.reply('Не удалось обновить календарь. Пожалуйста, попробуйте снова.');
 		}
@@ -140,7 +140,7 @@ export const dateSelectionHandler: MiddlewareFn<MyContext> = async (ctx) => {
 // Обработчик для завершения выбора
 export const doneHandler: MiddlewareFn<MyContext> = async (ctx) => {
 	try {
-		logger.info('"Done" button pressed ✅');
+		logger.info('[✅] "Done" button pressed.');
 
 		// Проверяем, были ли выбраны даты
 		if (!ctx.session.selectedDates || ctx.session.selectedDates.length === 0) {
@@ -150,12 +150,12 @@ export const doneHandler: MiddlewareFn<MyContext> = async (ctx) => {
 
 		// Проверяем, выбраны ли аэропорты отправления и прибытия
 		if (!ctx.session.fromAirport || !ctx.session.toAirport) {
-			logger.error('fromAirport or toAirport missing in session ⚠️');
+			logger.error('[⚠️] fromAirport or toAirport missing in session.');
 			await ctx.reply('Информация об аэропортах отправления и прибытия отсутствует. Пожалуйста, начните поиск заново.');
 			return;
 		}
 
-		logger.debug('Starting ticket search 🔍');
+		logger.debug('[🔍] Starting ticket search...');
 
 		// Выполняем поиск билетов для каждой выбранной даты
 		for (const date of ctx.session.selectedDates) {
@@ -173,10 +173,10 @@ ${result}`);
 			calendarMonth: new Date().getMonth(),
 		};
 
-		logger.debug('Search completed ✅');
+		logger.debug('[✅] Search completed.');
 	} catch (error) {
 		// Логируем ошибку и уведомляем пользователя
-		logger.error('Error handling "Done" button press ❌', error);
+		logger.error('[❌] Error handling "Done" button press:', error);
 		await ctx.reply('Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте снова.');
 	}
 };
@@ -204,7 +204,7 @@ export const prevMonthHandler: MiddlewareFn<MyContext> = async (ctx) => {
 		);
 	} catch (error) {
 		// Логируем ошибку, если не удалось перейти к предыдущему месяцу
-		logger.error('Error moving to previous month ❌', error);
+		logger.error('[❌] Error moving to previous month:', error);
 	}
 };
 
@@ -238,7 +238,7 @@ export const nextMonthHandler: MiddlewareFn<MyContext> = async (ctx) => {
 		);
 	} catch (error) {
 		// Логируем ошибку и уведомляем пользователя
-		logger.error('Error moving to next month ❌', error);
+		logger.error('[❌] Error moving to next month:', error);
 		await ctx.reply('Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте снова.');
 	}
 };

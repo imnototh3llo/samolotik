@@ -10,11 +10,11 @@ const sessionStore = new Map<number, SessionData>();
 export const sessionMiddleware: Middleware<MyContext> = async (ctx, next) => {
 	// Получаем идентификатор чата из контекста
 	const chatId = ctx.chat?.id;
-	logger.debug('Chat ID:', chatId);
+	logger.debug('[🛂] Chat ID:', chatId);
 
 	// Если идентификатор чата не найден, логируем предупреждение и переходим к следующему middleware
 	if (chatId === undefined) {
-		logger.warn('Chat ID is undefined, proceeding to next middleware.');
+		logger.warn('[⚠️] Chat ID is undefined, proceeding to next middleware.');
 		return next();
 	}
 
@@ -24,12 +24,12 @@ export const sessionMiddleware: Middleware<MyContext> = async (ctx, next) => {
 		calendarYear: new Date().getFullYear(), // Устанавливаем текущий год для календаря
 		calendarMonth: new Date().getMonth(), // Устанавливаем текущий месяц для календаря
 	};
-	logger.debug('Session data for chat:', ctx.session);
+	logger.debug('[📚] Session data for chat:', ctx.session);
 
 	// Выполняем следующую функцию middleware в цепочке
 	await next();
 
 	// Сохраняем обновленные данные сессии в хранилище
 	sessionStore.set(chatId, ctx.session);
-	logger.info('Updated session data saved for chat:', chatId, ctx.session);
+	logger.info('[📚] Updated session data saved for chat:', chatId, ctx.session);
 };

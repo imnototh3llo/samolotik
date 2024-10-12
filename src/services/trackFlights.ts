@@ -5,24 +5,24 @@ import logger from '../utils/logger.js';
 // Функция для отслеживания доступных билетов на авиарейсы
 export const trackFlights = async (from: string, to: string, date: string): Promise<string> => {
 	// Логируем информацию о запросе на отслеживание билетов
-	logger.info(`Tracking tickets from ${from} to ${to} on date ${date} ✈️`);
+	logger.info(`[✈️] Tracking tickets from ${from} to ${to} on date ${date}.`);
 
 	try {
 		// Проверяем, что входные данные корректны
 		if (!from || !to || !date) {
-			throw new Error('Некорректные входные данные');
+			logger.error('[❌] Incorrect input data.')
 		}
 
 		// Получаем API-ключ из переменных окружения
 		const apiKey = process.env.TRAVELPAYOUTS_AVIASALES;
 		if (!apiKey) {
-			throw new Error('API-ключ Aviasales не найден в переменных окружения');
+			logger.error('[⚠️] Aviasales API key not found in environment variables.');
 		}
 
 		// Проверяем, что дата передана в корректном формате
 		const dateObj = new Date(date);
 		if (Number.isNaN(dateObj.getTime())) {
-			throw new TypeError('Некорректный формат даты');
+			logger.error('[❌] Incorrect date format.');
 		}
 
 		// Форматируем дату для использования в запросе
@@ -44,15 +44,15 @@ export const trackFlights = async (from: string, to: string, date: string): Prom
 		};
 
 		// Логируем URL запроса и параметры
-		logger.debug(`API request URL: ${url} 🌐`);
-		logger.debug('Request parameters:', params);
+		logger.debug(`[🌐] API request URL: ${url}`);
+		logger.debug('[🌐] Request parameters:', params);
 
 		// Выполняем GET-запрос к API
 		const response = await axios.get(url, { params });
 
 		// Проверяем статус ответа, если он не 200 - выбрасываем ошибку
 		if (response.status !== 200) {
-			throw new Error(`Error during API request: ${response.statusText} ❌`);
+			logger.error(`[❌] Error during API request: ${response.statusText}.`);
 		}
 
 		// Получаем данные из ответа API
@@ -60,7 +60,7 @@ export const trackFlights = async (from: string, to: string, date: string): Prom
 
 		// Проверяем, что в данных есть информация о рейсах
 		if (!data.data || data.data.length === 0) {
-			logger.warn('Tickets not found ❌');
+			logger.warn('[❌] Tickets not found.');
 			return 'Не удалось найти билеты на указанное направление.';
 		}
 
@@ -78,7 +78,7 @@ export const trackFlights = async (from: string, to: string, date: string): Prom
 		const cheapestFlight = flights.reduce((prev, curr) => (curr.price < prev.price ? curr : prev));
 
 		// Логируем информацию о самом дешевом билете
-		logger.info(`Cheapest ticket: ${cheapestFlight.price} RUB, Airline: ${cheapestFlight.airline} 💸`);
+		logger.info(`[💸] Cheapest ticket: ${cheapestFlight.price} RUB, Airline: ${cheapestFlight.airline}.`);
 
 		// Возвращаем информацию о самом дешевом билете
 		return `Самый дешевый билет: ${cheapestFlight.price} руб.
@@ -89,13 +89,13 @@ export const trackFlights = async (from: string, to: string, date: string): Prom
 		// Обработка ошибок при выполнении запроса
 		if (axios.isAxiosError(error)) {
 			// Логируем ошибку, если она связана с запросом к API
-			logger.error('Error during API request ❌:', error.message);
+			logger.error('[❌] Error during API request:', error.message);
 		} else if (error instanceof Error) {
 			// Логируем общую ошибку
-			logger.error('Error fetching ticket data ❌:', error.message);
+			logger.error('[❌] Error fetching ticket data:', error.message);
 		} else {
 			// Логируем неизвестную ошибку
-			logger.error('Unknown error ❓:', error);
+			logger.error('[❓] Unknown error:', error);
 		}
 
 		// Возвращаем сообщение об ошибке пользователю

@@ -14,6 +14,6 @@ export const startHandler = async (ctx: MyContext) => {
 		});
 	} catch (error) {
 		// Логируем ошибку, если не удалось отправить сообщение
-		logger.error('Error sending welcome message ❌:', error);
+		logger.error('[❌] Error sending welcome message:', error);
 	}
 };
