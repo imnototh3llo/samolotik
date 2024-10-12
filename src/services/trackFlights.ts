@@ -10,7 +10,7 @@ export const trackFlights = async (from: string, to: string, date: string): Prom
 	try {
 		// Проверяем, что входные данные корректны
 		if (!from || !to || !date) {
-			logger.error('[❌] Incorrect input data.')
+			logger.error('[❌] Incorrect input data.');
 		}
 
 		// Получаем API-ключ из переменных окружения
