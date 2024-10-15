@@ -1,7 +1,7 @@
 import type { MiddlewareFn } from 'telegraf';
 import { Markup } from 'telegraf';
 import { getAirports } from '../services/getAirports.js';
-import { trackFlights } from '../services/trackFlights.js';
+import { getTickets } from '../services/getTickets.js';
 import type { MyContext } from '../types.js';
 import { generateCalendarMarkup } from '../utils/calendar.js';
 import logger from '../utils/logger.js';
@@ -159,7 +159,7 @@ export const doneHandler: MiddlewareFn<MyContext> = async (ctx) => {
 
 		// Выполняем поиск билетов для каждой выбранной даты
 		for (const date of ctx.session.selectedDates) {
-			const result = await trackFlights(ctx.session.fromAirport, ctx.session.toAirport, date);
+			const result = await getTickets(ctx.session.fromAirport, ctx.session.toAirport, date);
 			await ctx.reply(`Результаты поиска на ${date}:
 ${result}`);
 		}

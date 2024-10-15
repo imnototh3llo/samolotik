@@ -1,9 +1,9 @@
 import axios from 'axios';
-import type { Flight } from '../types.js';
+import type { Ticket } from '../types.js';
 import logger from '../utils/logger.js';
 
 // Функция для отслеживания доступных билетов на авиарейсы
-export const trackFlights = async (from: string, to: string, date: string): Promise<string> => {
+export const getTickets = async (from: string, to: string, date: string): Promise<string> => {
 	// Логируем информацию о запросе на отслеживание билетов
 	logger.info(`[✈️] Tracking tickets from ${from} to ${to} on date ${date}.`);
 
@@ -64,27 +64,27 @@ export const trackFlights = async (from: string, to: string, date: string): Prom
 			return 'Не удалось найти билеты на указанное направление.';
 		}
 
-		// Преобразуем данные в массив объектов Flight
-		const flights: Flight[] = data.data.map((flight: any) => ({
-			price: flight.price, // Цена билета
-			airline: flight.airline, // Авиакомпания
-			date: flight.departure_at.split('T')[0], // Дата вылета
-			flight_number: flight.flight_number, // Номер рейса
-			departure_at: flight.departure_at, // Время вылета
-			return_at: flight.return_at, // Время обратного рейса (если есть)
+		// Преобразуем данные в массив объектов Ticket
+		const tickets: Ticket[] = data.data.map((ticket: any) => ({
+			price: ticket.price, // Цена билета
+			airline: ticket.airline, // Авиакомпания
+			date: ticket.departure_at.split('T')[0], // Дата вылета
+			flight_number: ticket.flight_number, // Номер рейса
+			departure_at: ticket.departure_at, // Время вылета
+			return_at: ticket.return_at, // Время обратного рейса (если есть)
 		}));
 
 		// Находим самый дешевый рейс из списка
-		const cheapestFlight = flights.reduce((prev, curr) => (curr.price < prev.price ? curr : prev));
+		const cheapestTicket = tickets.reduce((prev, curr) => (curr.price < prev.price ? curr : prev));
 
 		// Логируем информацию о самом дешевом билете
-		logger.info(`[💸] Cheapest ticket: ${cheapestFlight.price} RUB, Airline: ${cheapestFlight.airline}.`);
+		logger.info(`[💸] Cheapest ticket: ${cheapestTicket.price} RUB, Airline: ${cheapestTicket.airline}.`);
 
 		// Возвращаем информацию о самом дешевом билете
-		return `Самый дешевый билет: ${cheapestFlight.price} руб.
-Авиакомпания: ${cheapestFlight.airline}
-Рейс: ${cheapestFlight.flight_number}
-Дата вылета: ${cheapestFlight.departure_at}`;
+		return `Самый дешевый билет: ${cheapestTicket.price} руб.
+Авиакомпания: ${cheapestTicket.airline}
+Рейс: ${cheapestTicket.flight_number}
+Дата вылета: ${cheapestTicket.departure_at}`;
 	} catch (error: unknown) {
 		// Обработка ошибок при выполнении запроса
 		if (axios.isAxiosError(error)) {

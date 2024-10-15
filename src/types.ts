@@ -8,7 +8,7 @@ export type Airport = {
 };
 
 // Определение типа для информации о рейсе
-export type Flight = {
+export type Ticket = {
 	airline: string; // Название авиакомпании (например, "Аэрофлот")
 	date: string; // Дата рейса в формате YYYY-MM-DD
 	departure_at: string; // Время вылета в формате HH:MM
