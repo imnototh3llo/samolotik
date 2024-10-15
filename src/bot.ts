@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
-import { Telegraf, session } from 'telegraf';
-import { searchHandler, startHandler, textHandler } from './handlers/index.js';
+import type { Middleware } from 'telegraf';
+import { Telegraf } from 'telegraf';
+import { startHandler, searchHandler, textHandler } from './handlers/index.js';
 import {
 	airportFromHandler,
 	airportToHandler,
@@ -11,89 +12,153 @@ import {
 } from './handlers/selectionHandlers.js';
 import type { MyContext } from './types.js';
 import logger from './utils/logger.js';
+import { sessionMiddleware } from './utils/sessionMiddleware.js';
 
-// Загрузка переменных окружения из файла .env
-const dotenvResult = dotenv.config();
-if (dotenvResult.error) {
-	// Если произошла ошибка при загрузке .env файла, логируем ошибку и завершаем процесс
-	logger.error({ err: dotenvResult.error }, '[⚠️] Error loading .env file.');
-	process.exit(1);
+/**
+ * Загружает и валидирует необходимые переменные окружения.
+ * Завершает процесс с ошибкой, если какие-либо обязательные переменные отсутствуют.
+ */
+function loadEnv(): void {
+	const dotenvResult = dotenv.config();
+	if (dotenvResult.error) {
+		logger.error({ err: dotenvResult.error }, '[⚠️] Error loading .env file.');
+		process.exit(1);
+	}
+
+	const requiredEnvVars = ['BOT_TOKEN', 'TRAVELPAYOUTS_AVIASALES'];
+	const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+
+	if (missingVars.length > 0) {
+		logger.error({ missingVars }, '[⚠️] Missing required environment variables.');
+		process.exit(1);
+	}
 }
 
-// Проверка наличия BOT_TOKEN в переменных окружения
-if (!process.env.BOT_TOKEN) {
-	// Если BOT_TOKEN не найден, логируем ошибку и завершаем процесс
-	logger.error('[⚠️] BOT_TOKEN not found in environment variables.');
-	process.exit(1);
+/**
+ * Регистрирует обработчики действий с использованием регулярных выражений.
+ *
+ * @param bot - Экземпляр бота Telegraf.
+ */
+function registerActionHandlers(bot: Telegraf<MyContext>): void {
+	bot.action('START_SEARCH', searchHandler);
+	bot.on('text', textHandler);
+
+	// Массив объектов, содержащих паттерны и соответствующие обработчики
+	const actionHandlers: { handler: Middleware<MyContext>; pattern: RegExp }[] = [
+		{ pattern: /SELECT_FROM_(?<airportCode>[A-Z]{3})/, handler: airportFromHandler },
+		{ pattern: /SELECT_TO_(?<airportCode>[A-Z]{3})/, handler: airportToHandler },
+		{ pattern: /SELECT_DATE_(?<date>\d{4}-\d{2}-\d{2})/, handler: dateSelectionHandler },
+		{ pattern: /PREV_MONTH_(?<year>\d{4})_(?<month>\d{1,2})/, handler: prevMonthHandler },
+		{ pattern: /NEXT_MONTH_(?<year>\d{4})_(?<month>\d{1,2})/, handler: nextMonthHandler },
+	];
+
+	for (const { pattern, handler } of actionHandlers) {
+		bot.action(pattern, handler);
+	}
+
+	// Обработчик завершения выбора
+	bot.action('DONE', doneHandler);
 }
 
-// Инициализация экземпляра бота с BOT_TOKEN из окружения
-const bot = new Telegraf<MyContext>(process.env.BOT_TOKEN);
+/**
+ * Настраивает глобальные обработчики ошибок и системные сигналы.
+ *
+ * @param bot - Экземпляр бота Telegraf.
+ */
+function setupGlobalErrorHandlers(bot: Telegraf<MyContext>): void {
+	/**
+	 * Обрабатывает ошибки, возникающие в Telegraf.
+	 *
+	 * @param error - Ошибка, возникшая при обработке обновления.
+	 * @param ctx - Контекст обновления.
+	 */
+	/* eslint-disable promise/prefer-await-to-then */
+	/* eslint-disable promise/prefer-await-to-callbacks */
+	bot.catch(async (error, ctx) => {
+		logger.error(
+			{ err: error, update_id: ctx.update.update_id },
+			'[❌] An error occurred while processing the update.',
+		);
+	});
 
-// Использование middleware session для хранения данных сессии между взаимодействиями
-bot.use(session());
+	/* eslint-disable promise/prefer-await-to-callbacks */
 
-// Регистрация обработчиков команд и действий
-bot.start(startHandler); // Обработчик команды /start для приветствия пользователя и начала взаимодействия
-bot.action('START_SEARCH', searchHandler); // Обработчик действия кнопки "START_SEARCH" для начала поиска
-bot.on('text', textHandler); // Обработчик для любых текстовых сообщений от пользователя
+	/**
+	 * Функция для корректного завершения работы бота при получении системных сигналов.
+	 *
+	 * @param signal - Название системного сигнала.
+	 * @returns Функция-обработчик сигнала.
+	 */
+	function gracefulShutdown(signal: string): () => void {
+		return () => {
+			logger.warn(`[✋] Received ${signal}, stopping bot.`);
+			bot.stop();
+			process.exit(0);
+		};
+	}
 
-// Регистрация обработчиков для различных действий выбора, таких как выбор аэропортов или дат
-bot.action(/SELECT_FROM_(?<airportCode>[A-Z]{3})/, airportFromHandler); // Обработчик выбора аэропорта вылета, используя регулярное выражение для захвата кода аэропорта
-bot.action(/SELECT_TO_(?<airportCode>[A-Z]{3})/, airportToHandler); // Обработчик выбора аэропорта назначения, используя регулярное выражение для захвата кода аэропорта
-bot.action(/SELECT_DATE_(?<date>\d{4}-\d{2}-\d{2})/, dateSelectionHandler); // Обработчик выбора даты, используя регулярное выражение для захвата даты в формате YYYY-MM-DD
-bot.action('DONE', doneHandler); // Обработчик действия завершения выбора
-bot.action(/PREV_MONTH_(?<year>\d{4})_(?<month>\d{1,2})/, prevMonthHandler); // Обработчик выбора предыдущего месяца, используя регулярное выражение для захвата года и месяца
-bot.action(/NEXT_MONTH_(?<year>\d{4})_(?<month>\d{1,2})/, nextMonthHandler); // Обработчик выбора следующего месяца, используя регулярное выражение для захвата года и месяца
+	process.once('SIGINT', gracefulShutdown('SIGINT'));
+	process.once('SIGTERM', gracefulShutdown('SIGTERM'));
 
-/* eslint-disable promise/prefer-await-to-callbacks */
-// Обработка и логирование ошибок, возникающих в боте
-bot.catch(async (error, ctx) => {
-	// Логирование ошибки с идентификатором обновления, если произошла ошибка при обработке обновления
-	logger.error({ err: error, update_id: ctx.update.update_id }, '[❌] An error occurred while processing the update:');
-});
-/* eslint-enable promise/prefer-await-to-callbacks */
+	// Обработка необработанных отклонений промисов
+	process.on('unhandledRejection', (reason, promise) => {
+		logger.error({ promise, reason }, '[⚠️] Unhandled promise rejection:');
+		process.exit(1);
+	});
 
-// Функция для запуска бота
-async function launchBot() {
+	// Обработка неперехваченных исключений
+	process.on('uncaughtException', (error) => {
+		logger.error({ err: error }, '[❌] Unhandled exception:');
+		process.exit(1);
+	});
+}
+
+/**
+ * Запускает бота и логирует процесс запуска.
+ *
+ * @param bot - Экземпляр бота Telegraf.
+ */
+async function launchBot(bot: Telegraf<MyContext>): Promise<void> {
 	try {
 		logger.info('[🚀] Launching bot...');
-		await bot.launch(); // Запуск бота
+		await bot.launch();
 	} catch (error) {
-		// Логирование ошибки, если бот не удалось запустить, и завершение процесса
 		logger.error({ err: error }, '[❌] Error launching the bot:');
 		process.exit(1);
 	}
 }
 
-// Запуск бота
-void launchBot();
+/**
+ * Основная функция инициализации бота.
+ * Выполняет загрузку конфигурации, настройку middleware, регистрацию обработчиков и запуск бота.
+ */
+async function initializeBot(): Promise<void> {
+	loadEnv();
+
+	// Инициализация экземпляра бота с BOT_TOKEN из окружения
+	const bot = new Telegraf<MyContext>(process.env.BOT_TOKEN!);
+
+	// Использование кастомного middleware для сессий
+	bot.use(sessionMiddleware);
+
+	// Регистрация обработчиков команд и действий
+	bot.start(startHandler);
+	registerActionHandlers(bot);
+
+	// Настройка глобальных обработчиков ошибок и системных сигналов
+	setupGlobalErrorHandlers(bot);
+
+	// Запуск бота
+	await launchBot(bot);
+}
+
+// Запуск инициализации бота с использованием IIFE
+(async () => {
+	await initializeBot();
+})().catch((error) => {
+	logger.error({ err: error }, '[❌] Failed to initialize the bot.');
+	process.exit(1);
+});
+
+// Логируем успешный запуск бота
 logger.info('[✅] Bot launched successfully!');
-
-// Обработчики корректного завершения работы для системных сигналов
-process.once('SIGINT', () => {
-	// Обработка сигнала SIGINT (например, при нажатии Ctrl+C), логирование и остановка бота
-	logger.warn('[✋] Received SIGINT, stopping bot.');
-	bot.stop();
-	process.exit(0);
-});
-
-process.once('SIGTERM', () => {
-	// Обработка сигнала SIGTERM (например, при завершении процесса), логирование и остановка бота
-	logger.warn('[✋] Received SIGTERM, stopping bot.');
-	bot.stop();
-	process.exit(0);
-});
-
-// Обработка необработанных отклонений промисов и неперехваченных исключений, логирование их и завершение работы
-process.on('unhandledRejection', (reason, promise) => {
-	// Логирование необработанного отклонения промиса и завершение процесса
-	logger.error({ promise, reason }, '[⚠️] Unhandled promise rejection:');
-	process.exit(1);
-});
-
-process.on('uncaughtException', (error) => {
-	// Логирование неперехваченного исключения и завершение процесса
-	logger.error({ err: error }, '[❌] Unhandled exception:');
-	process.exit(1);
-});
