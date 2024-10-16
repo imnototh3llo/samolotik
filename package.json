@@ -24,7 +24,7 @@
 		"dotenv": "^16.4.5",
 		"fuse.js": "^7.0.0",
 		"pino": "^9.5.0",
-		"pino-pretty": "^11.2.2",
+		"pino-pretty": "^11.3.0",
 		"telegraf": "^4.16.3"
 	},
 	"devDependencies": {
