@@ -13,16 +13,14 @@
 		"format": "prettier --write . && eslint . --fix --format=pretty",
 		"fmt": "pnpm format",
 		"start": "node --enable-source-maps dist/src/bot.js",
-		"start:dev": "pnpm build && pnpm build:clean && pnpm build:check && pnpm build:esm && pnpm start",
+		"start:dev": "pnpm build && pnpm start",
 		"start:prod": "pnpm format && pnpm build && pnpm start"
 	},
 	"dependencies": {
 		"@swc/helpers": "^0.5.13",
 		"@telegraf/types": "^7.1.0",
 		"axios": "^1.7.7",
-		"chalk": "^5.3.0",
 		"dotenv": "^16.4.5",
-		"fuse.js": "^7.0.0",
 		"pino": "^9.5.0",
 		"pino-pretty": "^11.3.0",
 		"telegraf": "^4.16.3"
@@ -42,5 +40,5 @@
 		"typegram": "^5.2.0",
 		"typescript": "^5.6.3"
 	},
-	"packageManager": "pnpm@9.12.1"
+	"packageManager": "pnpm@9.12.2"
 }
